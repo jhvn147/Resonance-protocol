@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resonance Protocol</title>
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #0f1115;
+            --panel-bg: #181b22;
+            --border-color: #2f3642;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent: #238636;
+            --accent-hover: #2ea043;
+            --danger: #da3633;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            padding: 15px 25px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--panel-bg);
+        }
+
+        header h1 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .status-indicator {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--text-secondary);
+            border-radius: 50%;
+        }
+
+        .dot.active {
+            background-color: var(--accent);
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        aside {
+            background-color: var(--panel-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        .section-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        textarea, input[type="text"] {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            padding: 10px;
+            font-size: 0.9rem;
+            resize: none;
+            width: 100%;
+        }
+
+        textarea:focus, input:focus {
+            outline: none;
+            border-color: var(--text-secondary);
+        }
+
+        button {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 16px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        button.danger {
+            background-color: var(--danger);
+        }
+
+        button.danger:hover {
+            background-color: #b31d1c;
+        }
+
+        .workspace {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background-color: var(--bg-color);
+            position: relative;
+        }
+
+        .canvas-container {
+            flex: 1;
+            position: relative;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        .toolbar {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            display: flex;
+            gap: 10px;
+            background: var(--panel-bg);
+            padding: 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }
+
+        .toolbar button {
+            background: transparent;
+            color: var(--text-primary);
+            padding: 6px 10px;
+            font-size: 0.8rem;
+        }
+
+        .toolbar button:hover {
+            background: var(--border-color);
+        }
+
+        .controls-bar {
+            padding: 15px 20px;
+            background-color: var(--panel-bg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .audio-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Resonance Protocol</h1>
+        <div class="status-indicator">
+            <div id="statusDot" class="dot"></div>
+            <span id="statusText">Offline / Standby</span>
+        </div>
+    </header>
+
+    <main>
+        <aside>
+            <div class="input-group">
+                <label class="section-title">Your Active Peer ID</label>
+                <div style="background: var(--bg-color); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-size: 0.85rem; word-break: break-all; color: var(--text-secondary);" id="myPeerIdDisplay">
+                    Initialising node...
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label class="section-title" for="seekingInput">Seeking (Problem)</label>
+                <textarea id="seekingInput" rows="3" placeholder="e.g., Struggling with boundary conditions in engineering fluid dynamics..."></textarea>
+            </div>
+
+            <div class="input-group">
+                <label class="section-title" for="offeringInput">Offering (Expertise)</label>
+                <textarea id="offeringInput" rows="3" placeholder="e.g., Technical College level Engineering Mathematics & Physics..."></textarea>
+            </div>
+
+            <button id="broadcastBtn">Broadcast Beacon</button>
+
+            <hr style="border: 0; border-top: 1px solid var(--border-color);">
+
+            <div class="input-group">
+                <label class="section-title" for="roomIdInput">Session / Peer ID</label>
+                <input type="text" id="roomIdInput" placeholder="Enter peer identifier...">
+            </div>
+            <button id="connectBtn">Join Session</button>
+        </aside>
+
+        <div class="workspace">
+            <div class="canvas-container">
+                <div class="toolbar">
+                    <button id="clearBtn">Clear Canvas</button>
+                </div>
+                <canvas id="whiteboard"></canvas>
+            </div>
+
+            <div class="controls-bar">
+                <div class="audio-controls">
+                    <button id="micBtn">Mute Mic</button>
+                    <span id="audioStatus" style="font-size: 0.85rem; color: var(--text-secondary);">Voice: Inactive</span>
+                </div>
+                <button id="endSessionBtn" class="danger">End Session & Wipe</button>
+            </div>
+        </div>
+    </main>
+
+    <audio id="remoteAudio" autoplay></audio>
+
+    <script>
+        // Initialise PeerJS node
+        const peer = new Peer();
+        let localStream = null;
+        let activeCall = null;
+
+        peer.on('open', (id) => {
+            document.getElementById('myPeerIdDisplay').textContent = id;
+            document.getElementById('statusText').textContent = 'Online / Standby';
+        });
+
+        // Handle incoming calls from peers
+        peer.on('call', async (call) => {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                call.answer(localStream);
+                activeCall = call;
+                
+                call.on('stream', (remoteStream) => {
+                    document.getElementById('remoteAudio').srcObject = remoteStream;
+                });
+
+                document.getElementById('statusDot').classList.add('active');
+                document.getElementById('statusText').textContent = 'Session Connected';
+                document.getElementById('audioStatus').textContent = 'Voice: Active (Mic Open)';
+            } catch (err) {
+                alert('Microphone access denied or unavailable.');
+            }
+        });
+
+        // Interactive drawing canvas setup
+        const canvas = document.getElementById('whiteboard');
+        const ctx = canvas.getContext('2d');
+        let painting = false;
+
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            ctx.fillStyle = '#0f1115';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function startPosition(e) {
+            painting = true;
+            draw(e);
+        }
+
+        function endPosition() {
+            painting = false;
+            ctx.beginPath();
+        }
+
+        function draw(e) {
+            if (!painting) return;
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#e6edf3';
+
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        canvas.addEventListener('mousedown', startPosition);
+        canvas.addEventListener('mouseup', endPosition);
+        canvas.addEventListener('mousemove', draw);
+
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            ctx.fillStyle = '#0f1115';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        });
+
+        // Microphone mute toggle
+        const micBtn = document.getElementById('micBtn');
+        const audioStatus = document.getElementById('audioStatus');
+
+        micBtn.addEventListener('click', async () => {
+            if (!localStream) {
+                try {
+                    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                    audioStatus.textContent = 'Voice: Active (Mic Open)';
+                    micBtn.textContent = 'Mute Mic';
+                } catch (err) {
+                    alert('Microphone access required.');
+                }
+            } else {
+                const audioTrack = localStream.getAudioTracks()[0];
+                audioTrack.enabled = !audioTrack.enabled;
+                micBtn.textContent = audioTrack.enabled ? 'Mute Mic' : 'Unmute Mic';
+                audioStatus.textContent = audioTrack.enabled ? 'Voice: Active (Mic Open)' : 'Voice: Muted';
+            }
+        });
+
+        // Terminate session and wipe state
+        document.getElementById('endSessionBtn').addEventListener('click', () => {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            if (activeCall) {
+                activeCall.close();
+                activeCall = null;
+            }
+            ctx.fillStyle = '#0f1115';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('statusDot').classList.remove('active');
+            document.getElementById('statusText').textContent = 'Session Wiped / Standby';
+            audioStatus.textContent = 'Voice: Inactive';
+            micBtn.textContent = 'Mute Mic';
+            document.getElementById('seekingInput').value = '';
+            document.getElementById('offeringInput').value = '';
+        });
+
+        document.getElementById('broadcastBtn').addEventListener('click', () => {
+            const seeking = document.getElementById('seekingInput').value;
+            const offering = document.getElementById('offeringInput').value;
+            if(!seeking && !offering) {
+                alert('Please state what you are seeking or offering.');
+                return;
+            }
+            document.getElementById('statusText').textContent = 'Beacon Broadcasted (Active Listener)';
+            document.getElementById('statusDot').classList.add('active');
+        });
+
+        // Connect to a peer using their ID
+        document.getElementById('connectBtn').addEventListener('click', async () => {
+            const targetId = document.getElementById('roomIdInput').value.trim();
+            if(!targetId) {
+                alert('Please enter a valid peer identifier.');
+                return;
+            }
+
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                const call = peer.call(targetId, localStream);
+                activeCall = call;
+
+                call.on('stream', (remoteStream) => {
+                    document.getElementById('remoteAudio').srcObject = remoteStream;
+                });
+
+                document.getElementById('statusDot').classList.add('active');
+                document.getElementById('statusText').textContent = 'Session Connected';
+                audioStatus.textContent = 'Voice: Active (Mic Open)';
+            } catch (err) {
+                alert('Connection failed or microphone access denied.');
+            }
+        });
+    </script>
+</body>
+</html>

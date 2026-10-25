@@ -2,7 +2,7 @@ Resonance Protocol: Complete Technical Specification and Implementation
 
 1. Introduction
 
-Centralised platforms rely on data harvesting, continuous user tracking, and attention-extraction algorithms. This project establishes the **Resonance Protocol**, a decentralised, peer-to-peer web application designed to connect individuals seeking assistance with peers offering expertise—specifically tailored for technical college-level engineering mathematics, physics, and problem-solving—without advertisements, accounts, or financial transactions.
+Centralised platforms rely on data harvesting, continuous user tracking, and attention-extraction algorithms. This project establishes the **Resonance Protocol**, a decentralised, peer-to-peer web application designed to connect individuals seeking assistance with peers offering expertise without advertisements, accounts, or financial transactions.
 
 2. Purpose
 
